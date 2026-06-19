@@ -3,10 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>LangGraph Agents Lab — learn how agents really work</title>
-<meta name="description" content="A hands-on, offline-runnable LangGraph teaching lab: single agent → tool-use failure modes → multi-agent → orchestrator → advanced. 40+ tiny examples, every one runs with zero API keys." />
-<link rel="preconnect" href="https://cdnjs.cloudflare.com" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+<title>LangGraph Agents Lab</title>
+<meta name="description" content="A hands-on, offline-runnable LangGraph teaching lab — with a live in-browser demo of the agent loop and its failure modes." />
 <style>
   :root{
     --bg:#0b0e14; --bg2:#11151f; --panel:#151b29; --panel2:#1a2233;
@@ -18,356 +16,315 @@
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
-  body{margin:0;background:radial-gradient(1200px 700px at 70% -10%,#1a2236 0,var(--bg) 55%);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
-  a{color:var(--accent);text-decoration:none}
-  a:hover{text-decoration:underline}
+  body{margin:0;background:radial-gradient(1100px 600px at 70% -10%,#1a2236 0,var(--bg) 55%);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
   code{font-family:var(--mono)}
-  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  .wrap{max-width:880px;margin:0 auto;padding:0 22px}
 
-  /* nav */
   nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);background:rgba(11,14,20,.72);border-bottom:1px solid var(--line)}
-  nav .wrap{display:flex;align-items:center;gap:18px;height:58px}
-  nav .brand{font-weight:700;letter-spacing:.2px;margin-right:auto;display:flex;align-items:center;gap:10px}
-  nav .brand .dot{width:11px;height:11px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 14px var(--accent)}
-  nav a.link{color:var(--muted);font-size:14px}
-  nav a.link:hover{color:var(--ink);text-decoration:none}
+  nav .wrap{display:flex;align-items:center;gap:16px;height:56px}
+  nav .brand{font-weight:700;margin-right:auto;display:flex;align-items:center;gap:9px}
+  nav .brand .dot{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 12px var(--accent)}
   nav .ghub{border:1px solid var(--line);padding:7px 13px;border-radius:9px;color:var(--ink);font-size:13px}
-  @media(max-width:760px){nav a.link{display:none}}
 
-  /* hero */
-  header.hero{padding:74px 0 40px}
-  .kicker{font-family:var(--mono);color:var(--accent2);font-size:13px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px}
-  h1{font-size:clamp(34px,5.5vw,58px);line-height:1.04;margin:0 0 18px;font-weight:800;letter-spacing:-.02em}
+  header.hero{padding:56px 0 26px;text-align:center}
+  h1{font-size:clamp(30px,5vw,46px);line-height:1.08;margin:0 0 14px;font-weight:800;letter-spacing:-.02em}
   h1 .grad{background:linear-gradient(110deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .lede{font-size:clamp(16px,2.2vw,20px);color:var(--muted);max-width:680px}
-  .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
-  .btn{display:inline-flex;align-items:center;gap:9px;padding:12px 18px;border-radius:11px;font-weight:600;font-size:15px;border:1px solid transparent;cursor:pointer}
-  .btn.primary{background:linear-gradient(135deg,var(--accent),#5f78ff);color:#0b0e14}
-  .btn.primary:hover{filter:brightness(1.08);text-decoration:none}
-  .btn.ghost{border-color:var(--line);color:var(--ink);background:var(--panel)}
-  .btn.ghost:hover{border-color:var(--accent);text-decoration:none}
+  .lede{font-size:clamp(15px,2.2vw,18px);color:var(--muted);max-width:600px;margin:0 auto}
+  .chips{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-top:22px}
+  .chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:12.5px;color:var(--muted)}
+  .chip b{color:var(--ink)}.chip .em{color:var(--accent2)}
 
-  .chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:34px}
-  .chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 15px;font-size:13px;color:var(--muted)}
-  .chip b{color:var(--ink)}
-  .chip .em{color:var(--accent2)}
+  section{padding:34px 0}
+  h2{font-size:22px;margin:0 0 4px;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:14.5px;margin-bottom:18px}
 
-  section{padding:50px 0;border-top:1px solid var(--line)}
-  h2{font-size:clamp(24px,3.5vw,34px);margin:0 0 8px;letter-spacing:-.01em}
-  h2 .n{font-family:var(--mono);color:var(--faint);font-size:.62em;margin-right:12px}
-  .sub{color:var(--muted);max-width:720px;margin-bottom:26px}
+  /* DEMO */
+  .demo{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .demo .head{display:flex;align-items:center;gap:8px;padding:11px 16px;border-bottom:1px solid var(--line);background:var(--panel2)}
+  .demo .head .d{width:11px;height:11px;border-radius:50%;background:#ff5f56}
+  .demo .head .d.y{background:#ffbd2e}.demo .head .d.g{background:#27c93f}
+  .demo .head .t{margin-left:8px;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+  .demo .head .live{margin-left:auto;font-size:11px;font-family:var(--mono);color:var(--good);display:flex;align-items:center;gap:6px}
+  .demo .head .live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 8px var(--good)}
 
-  /* offline callout */
-  .callout{display:flex;gap:16px;align-items:flex-start;background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-left:3px solid var(--accent2);border-radius:var(--radius);padding:18px 20px}
-  .callout .ic{font-size:22px;line-height:1}
-  .callout p{margin:0;color:var(--muted)}
-  .callout b{color:var(--ink)}
-
-  /* module cards */
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;transition:.18s;position:relative;overflow:hidden}
-  .card:hover{border-color:var(--accent);transform:translateY(-2px)}
-  .card .tag{font-family:var(--mono);font-size:12px;color:var(--accent2);letter-spacing:.1em}
-  .card h3{margin:8px 0 6px;font-size:19px}
-  .card p{color:var(--muted);font-size:14.5px;margin:0 0 12px}
-  .files{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px}
-  .files li{font-family:var(--mono);font-size:12.5px;color:var(--faint);display:flex;gap:8px;align-items:baseline}
-  .files li b{color:var(--ink);font-weight:500}
-  .files li.more{color:var(--accent)}
-  .aha{margin-top:13px;padding-top:12px;border-top:1px dashed var(--line);font-size:13.5px;color:var(--ink)}
-  .aha span{color:var(--accent2);font-weight:600}
-  .badge-star{position:absolute;top:14px;right:14px;background:var(--warn);color:#0b0e14;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px}
+  .scen{display:flex;gap:8px;flex-wrap:wrap;padding:14px 16px 0}
+  .scen button{background:var(--bg2);border:1px solid var(--line);color:var(--muted);font-size:12.5px;padding:7px 12px;border-radius:9px;cursor:pointer;font-family:var(--sans)}
+  .scen button:hover{color:var(--ink);border-color:var(--accent)}
+  .scen button.on{background:rgba(124,147,255,.14);border-color:var(--accent);color:var(--ink)}
 
   /* loop diagram */
-  .loop{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin:8px 0 6px}
-  .node{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 20px;font-weight:600;text-align:center;min-width:110px}
-  .node small{display:block;color:var(--faint);font-weight:400;font-family:var(--mono);font-size:11px;margin-top:3px}
-  .node.agent{border-color:var(--accent)}
-  .node.tool{border-color:var(--accent2)}
-  .node.end{border-color:var(--good)}
-  .arrow{color:var(--faint);font-family:var(--mono);font-size:13px;text-align:center}
-  .arrow b{color:var(--accent);display:block;font-size:11px}
+  .loop{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:16px}
+  .lnode{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:9px 15px;font-weight:600;font-size:13.5px;transition:.22s;opacity:.55}
+  .lnode small{display:block;color:var(--faint);font-weight:400;font-family:var(--mono);font-size:10px;margin-top:2px}
+  .lnode.active{opacity:1;transform:translateY(-2px)}
+  .lnode.agent.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 6px 20px -8px var(--accent)}
+  .lnode.tools.active{border-color:var(--accent2);box-shadow:0 0 0 1px var(--accent2),0 6px 20px -8px var(--accent2)}
+  .lnode.end.active{border-color:var(--good);box-shadow:0 0 0 1px var(--good)}
+  .lnode.err.active{border-color:var(--bad);box-shadow:0 0 0 1px var(--bad);color:var(--bad)}
+  .larrow{color:var(--faint);font-size:14px}
+  .lcount{font-family:var(--mono);font-size:11px;color:var(--faint);align-self:center}
+  .lcount b{color:var(--warn)}
 
-  /* matrix table */
-  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius)}
-  table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:720px}
-  thead th{background:var(--panel2);text-align:left;padding:12px 14px;color:var(--accent2);font-family:var(--mono);font-size:12px;letter-spacing:.05em;border-bottom:1px solid var(--line)}
-  tbody td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--muted)}
-  tbody tr:last-child td{border-bottom:none}
-  tbody tr:hover{background:var(--bg2)}
-  td .f{font-family:var(--mono);font-size:12px;color:var(--faint)}
-  td b{color:var(--ink)}
-  .pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:6px;background:var(--panel2);color:var(--accent2);border:1px solid var(--line)}
+  /* transcript */
+  .feed{min-height:210px;max-height:340px;overflow-y:auto;padding:6px 16px 16px;display:flex;flex-direction:column;gap:9px}
+  .msg{display:flex;gap:10px;align-items:flex-start;animation:pop .28s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .msg .ic{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:14px;flex:0 0 auto;background:var(--bg2);border:1px solid var(--line)}
+  .msg .bub{font-size:14px;padding-top:2px}
+  .msg .who{font-size:11px;color:var(--faint);font-family:var(--mono);margin-bottom:1px}
+  .msg.user .ic{border-color:var(--accent)}
+  .msg.agent .ic{border-color:var(--accent)}
+  .msg.tools .ic{border-color:var(--accent2)}
+  .tc{font-family:var(--mono);font-size:12.5px;background:var(--bg2);border:1px solid var(--line);border-left:2px solid var(--accent);padding:6px 10px;border-radius:7px;color:var(--ink)}
+  .tres{font-family:var(--mono);font-size:12.5px;color:var(--good)}
+  .terr{font-family:var(--mono);font-size:12.5px;color:var(--bad)}
+  .think{color:var(--muted);font-style:italic}
+  .final{color:var(--ink)}
+  .recerr{font-family:var(--mono);font-size:12.5px;color:var(--bad);background:rgba(255,107,129,.08);border:1px solid rgba(255,107,129,.3);padding:6px 10px;border-radius:7px}
 
-  /* code */
-  .codecard{background:#0d1117;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin:14px 0}
+  .controls{display:flex;gap:10px;align-items:center;padding:0 16px 16px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;font-weight:600;font-size:14px;border:1px solid transparent;cursor:pointer;font-family:var(--sans)}
+  .btn.run{background:linear-gradient(135deg,var(--accent),#5f78ff);color:#0b0e14}
+  .btn.run:hover{filter:brightness(1.08)}
+  .btn.run:disabled{opacity:.5;cursor:default;filter:none}
+  .btn.ghost{background:var(--bg2);border-color:var(--line);color:var(--muted)}
+  .btn.ghost:hover{color:var(--ink)}
+  .approve{display:flex;gap:8px}
+  .btn.ok{background:rgba(86,211,100,.15);border-color:var(--good);color:var(--good)}
+  .btn.no{background:rgba(255,107,129,.12);border-color:var(--bad);color:var(--bad)}
+  .hint{font-size:12.5px;color:var(--faint);margin-left:auto}
+
+  /* what's inside */
+  ol.path{list-style:none;counter-reset:m;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
+  ol.path li{counter-increment:m;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 16px;display:flex;gap:13px;align-items:baseline}
+  ol.path li::before{content:counter(m);font-family:var(--mono);color:var(--accent2);font-weight:700;flex:0 0 auto}
+  ol.path li b{color:var(--ink)}ol.path li span{color:var(--muted);font-size:14px}
+  ol.path li .star{color:var(--warn);font-size:11px;font-weight:700;margin-left:6px}
+
+  .codecard{background:#0d1117;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
   .codecard .bar{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--panel2);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12px;color:var(--muted)}
   .codecard .bar .d{width:11px;height:11px;border-radius:50%;background:#ff5f56}
   .codecard .bar .d.y{background:#ffbd2e}.codecard .bar .d.g{background:#27c93f}
-  .codecard .bar .name{margin-left:8px}
-  pre{margin:0;padding:16px 18px;overflow-x:auto;font-size:13px;line-height:1.55}
-  pre code{font-family:var(--mono)}
-  .copy{margin-left:auto;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:11px;padding:4px 9px;border-radius:7px;cursor:pointer;font-family:var(--mono)}
-  .copy:hover{color:var(--ink);border-color:var(--accent)}
+  pre{margin:0;padding:15px 17px;overflow-x:auto;font-size:13px;line-height:1.55;color:#c9d4e3}
+  .k{color:#ff7b9c}.s{color:#7ee787}.c{color:#6b7888}.f{color:#79c0ff}
 
-  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  @media(max-width:760px){.two{grid-template-columns:1fr}}
-
-  footer{padding:40px 0 60px;border-top:1px solid var(--line);color:var(--faint);font-size:13.5px}
+  footer{padding:34px 0 56px;color:var(--faint);font-size:13px;text-align:center;border-top:1px solid var(--line);margin-top:18px}
   footer a{color:var(--muted)}
-  .disc{margin-top:10px;font-size:12.5px;color:var(--faint)}
 </style>
 </head>
 <body>
 
 <nav><div class="wrap">
-  <span class="brand"><span class="dot"></span> LangGraph&nbsp;Agents&nbsp;Lab</span>
-  <a class="link" href="#path">Learning path</a>
-  <a class="link" href="#failures">Failure modes</a>
-  <a class="link" href="#run">Run it</a>
+  <span class="brand"><span class="dot"></span> LangGraph Agents Lab</span>
   <a class="ghub" href="https://github.com/sugeerth/langgraph-agents-lab">GitHub ↗</a>
 </div></nav>
 
 <header class="hero"><div class="wrap">
-  <div class="kicker">Single agent → Tools &amp; failures → Multi-agent → Orchestrator → Advanced</div>
-  <h1>Learn how agents <span class="grad">actually work</span>.<br/>One tiny, runnable graph at a time.</h1>
-  <p class="lede">A hands-on LangGraph teaching lab built as a progression — from a bare state machine to a hand-built ReAct loop, through <b style="color:var(--ink)">15 tool-use failure modes in credible detail</b>, up to supervisors and orchestrators. Every example is small, focused, and <b style="color:var(--ink)">runs with zero API keys</b>.</p>
-  <div class="cta">
-    <a class="btn primary" href="https://github.com/sugeerth/langgraph-agents-lab">⌥ Clone the repo</a>
-    <a class="btn ghost" href="#failures">See the failure-modes matrix</a>
-  </div>
+  <h1>Watch an agent <span class="grad">actually run</span>.</h1>
+  <p class="lede">A hands-on LangGraph teaching lab — single agent → tool-use failure modes → multi-agent → orchestrator. Try the loop live below, then read the code. Everything runs with <b style="color:var(--ink)">zero API keys</b>.</p>
   <div class="chips">
-    <span class="chip"><b>40+</b> runnable examples</span>
-    <span class="chip"><b class="em">15</b> tool-use failure modes</span>
-    <span class="chip"><b>5</b> modules</span>
-    <span class="chip"><b>0</b> API keys to run</span>
-    <span class="chip">LangGraph <b>0.3.34</b></span>
+    <span class="chip"><b>39</b> runnable examples</span>
+    <span class="chip"><b class="em">86</b> tests, all green</span>
+    <span class="chip"><b>0</b> API keys</span>
   </div>
 </div></header>
 
 <section><div class="wrap">
-  <div class="callout">
-    <span class="ic">🔌</span>
-    <p><b>It runs offline, deterministically.</b> A scriptable <code>FakeChatModel</code> stands in for Claude, so every example and the entire test suite execute with no key and no cost — that determinism is what lets us trigger each failure on demand and assert on it in CI. Set <code>ANTHROPIC_API_KEY</code> and the exact same graphs run against the real <code>claude-haiku-4-5</code> instead. No code changes.</p>
-  </div>
-</div></section>
+  <h2>Live demo — the agent loop</h2>
+  <p class="sub">Pick a scenario and press <b style="color:var(--ink)">Run</b>. This is the same loop the lab teaches, simulated deterministically in your browser (no server, no key).</p>
 
-<section id="path"><div class="wrap">
-  <h2><span class="n">01</span>The learning path</h2>
-  <p class="sub">Each module is a folder of numbered, one-concept-per-file examples. You build the machinery by hand <em>before</em> meeting the prebuilt that collapses it — so nothing stays magic.</p>
+  <div class="demo">
+    <div class="head"><span class="d"></span><span class="d y"></span><span class="d g"></span><span class="t">agent.run()</span><span class="live">running offline</span></div>
 
-  <div class="loop">
-    <div class="node agent">Agent<small>llm + tools</small></div>
-    <div class="arrow"><b>tool_calls?</b>→</div>
-    <div class="node tool">Tools<small>ToolNode</small></div>
-    <div class="arrow"><b>loop back</b>↺</div>
-    <div class="node agent">Agent<small>reads results</small></div>
-    <div class="arrow"><b>no tool_calls</b>→</div>
-    <div class="node end">END<small>final answer</small></div>
-  </div>
-  <p class="sub" style="text-align:center;margin:4px auto 30px;font-size:13.5px">The ReAct loop you build by hand in Module&nbsp;1 — a cycle, not magic.</p>
+    <div class="scen" id="scen"></div>
 
-  <div class="grid">
-    <div class="card">
-      <div class="tag">MODULE 1 · 7 files</div>
-      <h3>Single agent</h3>
-      <p>From a bare <code>StateGraph</code> (no LLM) to the prebuilt <code>create_react_agent</code>.</p>
-      <ul class="files">
-        <li><b>01</b> bare state graph — nodes &amp; edges</li>
-        <li><b>02</b> state reducers</li>
-        <li><b>03</b> single LLM node</li>
-        <li><b>04</b> conditional edges</li>
-        <li><b>05</b> hand-built ReAct loop</li>
-        <li><b>06</b> tools_condition</li>
-        <li><b>07</b> prebuilt react agent</li>
-      </ul>
-      <div class="aha"><span>aha →</span> an agent is a state machine; ReAct is just a cycle.</div>
+    <div class="loop" id="loop">
+      <div class="lnode agent" data-n="agent">Agent<small>llm</small></div>
+      <span class="larrow">→</span>
+      <div class="lnode tools" data-n="tools">Tools<small>ToolNode</small></div>
+      <span class="larrow">↺</span>
+      <div class="lnode end" data-n="end">END<small>answer</small></div>
+      <span class="lcount" id="lcount"></span>
     </div>
 
-    <div class="card">
-      <span class="badge-star">★ centerpiece</span>
-      <div class="tag">MODULE 2 · 15 files</div>
-      <h3>Tool use &amp; failure modes</h3>
-      <p>Each file <em>deliberately</em> triggers a failure, then applies the LangGraph fix.</p>
-      <ul class="files">
-        <li><b>01–03</b> tool raises (catch / custom / off)</li>
-        <li><b>04</b> invalid args → validation</li>
-        <li><b>05</b> timeout · <b>06</b> retry · <b>07</b> fallback</li>
-        <li><b>08</b> rate-limit (429)</li>
-        <li><b>09</b> infinite loop → recursion limit</li>
-        <li><b>10</b> graceful cap · <b>11</b> hallucinated tool</li>
-        <li><b>12</b> silently-wrong result</li>
-        <li><b>13</b> determinism</li>
-        <li><b>14–15</b> human-in-the-loop interrupts</li>
-      </ul>
-      <div class="aha"><span>aha →</span> the dangerous failures are silent, not exceptions.</div>
-    </div>
+    <div class="feed" id="feed"></div>
 
-    <div class="card">
-      <div class="tag">MODULE 3 · 4 files</div>
-      <h3>Multi-agent</h3>
-      <p>Specialists sharing state, handing off, routing as a network — from scratch.</p>
-      <ul class="files">
-        <li><b>01</b> shared state, two nodes</li>
-        <li><b>02</b> handoff via <code>Command</code></li>
-        <li><b>03</b> network routing</li>
-        <li><b>04</b> handoff-as-a-tool (swarm)</li>
-      </ul>
-      <div class="aha"><span>aha →</span> <code>Command</code> = update + next node in one return.</div>
-    </div>
-
-    <div class="card">
-      <div class="tag">MODULE 4 · 4 files</div>
-      <h3>Orchestrator</h3>
-      <p>A supervisor that routes to workers; planner → fan-out → synthesize.</p>
-      <ul class="files">
-        <li><b>01</b> supervisor from scratch</li>
-        <li><b>02</b> structured routing</li>
-        <li><b>03</b> orchestrator-worker map-reduce</li>
-        <li><b>04</b> hierarchical teams (subgraphs)</li>
-      </ul>
-      <div class="aha"><span>aha →</span> a team is just a compiled graph used as a node.</div>
-    </div>
-
-    <div class="card">
-      <div class="tag">MODULE 5 · 9 files</div>
-      <h3>Advanced &amp; “many more”</h3>
-      <p>The production surface: memory, streaming, parallelism, tracing.</p>
-      <ul class="files">
-        <li><b>01–03</b> memory: threads, sqlite, time-travel</li>
-        <li><b>04–05</b> stream modes &amp; token streaming</li>
-        <li><b>06</b> subgraphs · <b>07</b> parallel + reducers</li>
-        <li><b>08</b> structured output</li>
-        <li><b>09</b> tracing hooks</li>
-      </ul>
-      <div class="aha"><span>aha →</span> memory = a checkpointer keyed by <code>thread_id</code>.</div>
+    <div class="controls">
+      <button class="btn run" id="runBtn">▶ Run</button>
+      <button class="btn ghost" id="resetBtn">Reset</button>
+      <div class="approve" id="approve" style="display:none">
+        <button class="btn ok" id="okBtn">✓ Approve</button>
+        <button class="btn no" id="noBtn">✕ Deny</button>
+      </div>
+      <span class="hint" id="hint"></span>
     </div>
   </div>
-</div></section>
-
-<section id="failures"><div class="wrap">
-  <h2><span class="n">02</span>The failure-modes matrix</h2>
-  <p class="sub">The centerpiece. Real agentic tool use fails in many ways — most of them quietly. Module&nbsp;2 reproduces each one deterministically and shows the LangGraph mechanism that handles it.</p>
-  <div class="tablewrap"><table>
-    <thead><tr><th>#</th><th>Failure</th><th>What triggers it</th><th>Mechanism / fix</th></tr></thead>
-    <tbody>
-      <tr><td>01–03</td><td><b>Tool raises an exception</b></td><td class="f">a tool throws</td><td><span class="pill">ToolNode(handle_tool_errors=…)</span> catch&nbsp;→&nbsp;ToolMessage, custom string, or fail-fast</td></tr>
-      <tr><td>04</td><td><b>Invalid / missing arguments</b></td><td class="f">model passes a non-int</td><td>pydantic <span class="pill">ValidationError</span> surfaced as a ToolMessage — a self-correction signal</td></tr>
-      <tr><td>05</td><td><b>Hanging / slow tool</b></td><td class="f">a tool sleeps forever</td><td><span class="pill">asyncio.wait_for</span> <em>inside</em> the tool — LangGraph won’t kill a hung node</td></tr>
-      <tr><td>06</td><td><b>Transient error</b></td><td class="f">flaky network</td><td><span class="pill">.with_retry()</span> backoff + jitter on the runnable</td></tr>
-      <tr><td>07</td><td><b>Permanent failure</b></td><td class="f">primary always down</td><td><span class="pill">.with_fallbacks([…])</span> degrade to a backup</td></tr>
-      <tr><td>08</td><td><b>Rate limit (429)</b></td><td class="f">provider throttles</td><td><span class="pill">.with_retry</span> + <span class="pill">InMemoryRateLimiter</span></td></tr>
-      <tr><td>09</td><td><b>Infinite tool-calling loop</b></td><td class="f">model never stops</td><td><span class="pill">recursion_limit</span> → <span class="pill">GraphRecursionError</span> (raw graphs)</td></tr>
-      <tr><td>10</td><td><b>…handled gracefully</b></td><td class="f">same loop</td><td>catch the error, or the prebuilt’s built-in <span class="pill">remaining_steps</span> graceful stop</td></tr>
-      <tr><td>11</td><td><b>Hallucinated tool name</b></td><td class="f">calls a tool that doesn’t exist</td><td>ToolNode returns a “tool not found” ToolMessage — no crash</td></tr>
-      <tr><td>12</td><td><b>Wrong tool / ignored result</b></td><td class="f">answers from “memory”</td><td>detect via the transcript / <span class="pill">stream_mode="updates"</span>; mitigate with prompt + <span class="pill">response_format</span></td></tr>
-      <tr><td>13</td><td><b>Non-determinism</b></td><td class="f">same input, different output</td><td><span class="pill">temperature=0</span> + the deterministic fake model</td></tr>
-      <tr><td>14–15</td><td><b>Destructive action, no guardrail</b></td><td class="f">delete prod</td><td><span class="pill">interrupt_before</span> &amp; <span class="pill">interrupt()</span> + checkpointer → human approval, then resume</td></tr>
-    </tbody>
-  </table></div>
 </div></section>
 
 <section><div class="wrap">
-  <h2><span class="n">03</span>What the code looks like</h2>
-  <p class="sub">A few representative slices. Every snippet below is real, runs offline, and is covered by a test.</p>
-
-  <div class="two">
-    <div>
-      <div class="codecard">
-        <div class="bar"><span class="d"></span><span class="d y"></span><span class="d g"></span><span class="name">m1 · the ReAct loop, by hand</span><button class="copy">copy</button></div>
-<pre><code class="language-python">def should_continue(state):
-    last = state["messages"][-1]
-    # the AIMessage asked for a tool? keep looping.
-    return "tools" if last.tool_calls else END
-
-g = StateGraph(MessagesState)
-g.add_node("agent", agent_node)        # model.bind_tools([...])
-g.add_node("tools", ToolNode([calculator]))
-g.add_edge(START, "agent")
-g.add_conditional_edges("agent", should_continue,
-                        {"tools": "tools", END: END})
-g.add_edge("tools", "agent")           # the cycle
-graph = g.compile()</code></pre>
-      </div>
-      <div class="codecard">
-        <div class="bar"><span class="d"></span><span class="d y"></span><span class="d g"></span><span class="name">m2 · human-in-the-loop on a destructive tool</span><button class="copy">copy</button></div>
-<pre><code class="language-python">agent = create_react_agent(
-    model, [dangerous_delete],
-    checkpointer=MemorySaver(),
-    interrupt_before=["tools"])        # pause before any tool
-
-cfg = {"configurable": {"thread_id": "t1"}}
-agent.invoke({"messages": [HumanMessage("delete prod-db")]}, cfg)
-agent.get_state(cfg).next              # ('tools',)  ← paused
-# ...human reviews, then approves:
-agent.invoke(None, cfg)               # resumes & runs it</code></pre>
-      </div>
-    </div>
-    <div>
-      <div class="codecard">
-        <div class="bar"><span class="d"></span><span class="d y"></span><span class="d g"></span><span class="name">common · the deterministic fake model</span><button class="copy">copy</button></div>
-<pre><code class="language-python"># offline: a scripted stand-in for Claude
-model = get_model(script=[
-    tool_call("calculator", {"a": 2, "b": 3, "op": "add"}),
-    "The sum is 5.",
-])
-# live: set ANTHROPIC_API_KEY and the SAME call
-# returns ChatAnthropic — the script is ignored.</code></pre>
-      </div>
-      <div class="codecard">
-        <div class="bar"><span class="d"></span><span class="d y"></span><span class="d g"></span><span class="name">m4 · map-reduce fan-out with Send</span><button class="copy">copy</button></div>
-<pre><code class="language-python">def planner(state):
-    # one dynamic branch per work item
-    return [Send("worker", {"item": x}) for x in state["items"]]
-
-def worker(state):
-    return {"results": [process(state["item"])]}   # reducer merges
-
-g.add_conditional_edges(START, planner, ["worker"])
-g.add_edge("worker", "synthesize")</code></pre>
-      </div>
-    </div>
-  </div>
+  <h2>What's inside</h2>
+  <p class="sub">Five modules of tiny, one-concept-per-file examples. Build it by hand, then meet the prebuilt.</p>
+  <ol class="path">
+    <li><span><b>Single agent</b> — bare state graph → hand-built ReAct loop → <code>create_react_agent</code>.</span></li>
+    <li><span><b>Tool use &amp; failure modes</b><span class="star">★ the centerpiece</span> — 15 examples: errors, retries, timeouts, rate limits, infinite loops, hallucinated tools, human-in-the-loop.</span></li>
+    <li><span><b>Multi-agent</b> — shared state, handoffs, network routing.</span></li>
+    <li><span><b>Orchestrator</b> — supervisor, map-reduce fan-out, hierarchical teams.</span></li>
+    <li><span><b>Advanced</b> — memory, streaming, subgraphs, structured output, tracing.</span></li>
+  </ol>
 </div></section>
 
-<section id="run"><div class="wrap">
-  <h2><span class="n">04</span>Run it in 60 seconds</h2>
-  <p class="sub">No API key needed. The whole suite runs offline against the deterministic fake model.</p>
+<section><div class="wrap">
+  <h2>Run the real thing</h2>
+  <p class="sub">No key needed — the whole suite runs offline against a deterministic fake model.</p>
   <div class="codecard">
-    <div class="bar"><span class="d"></span><span class="d y"></span><span class="d g"></span><span class="name">terminal</span><button class="copy">copy</button></div>
-<pre><code class="language-bash">git clone https://github.com/sugeerth/langgraph-agents-lab
-cd langgraph-agents-lab
-./run.sh setup            # create .venv + install
-
-./run.sh test             # run the full suite — offline, no keys
-./run.sh list             # list every runnable example
-./run.sh m2_tools_and_failures.09_infinite_loop_recursion
-./run.sh m4_orchestrator.03_orchestrator_worker_mapreduce
-
-# optional — run against the real Claude instead:
-export ANTHROPIC_API_KEY=sk-...        # then re-run anything</code></pre>
+    <div class="bar"><span class="d"></span><span class="d y"></span><span class="d g"></span>terminal</div>
+<pre><span class="c"># clone &amp; set up</span>
+git clone https://github.com/sugeerth/langgraph-agents-lab
+<span class="k">cd</span> langgraph-agents-lab
+./run.sh setup
+<span class="c"># run everything offline (no API key)</span>
+./run.sh test
+./run.sh m2_tools_and_failures.14_hitl_interrupt_before</pre>
   </div>
 </div></section>
 
 <footer><div class="wrap">
-  <div>Built as a learning lab for <b style="color:var(--muted)">LangGraph 0.3.34</b> · examples are tiny on purpose · everything is covered by tests.</div>
-  <div style="margin-top:8px"><a href="https://github.com/sugeerth/langgraph-agents-lab">github.com/sugeerth/langgraph-agents-lab</a></div>
-  <div class="disc">The destructive tools are simulated — they record intent and never touch your filesystem. Cost figures and provider behaviors are illustrative of LangGraph mechanics.</div>
+  Built for LangGraph 0.3.34 · examples are tiny on purpose · everything is tested.<br/>
+  <a href="https://github.com/sugeerth/langgraph-agents-lab">github.com/sugeerth/langgraph-agents-lab</a>
+  <div style="margin-top:8px;font-size:12px">Destructive tools are simulated — they record intent and never touch anything.</div>
 </div></footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
 <script>
-  if(window.hljs){hljs.highlightAll();}
-  document.querySelectorAll('.copy').forEach(function(b){
-    b.addEventListener('click',function(){
-      var code=b.closest('.codecard').querySelector('code').innerText;
-      navigator.clipboard.writeText(code).then(function(){
-        var t=b.textContent;b.textContent='copied ✓';setTimeout(function(){b.textContent=t;},1400);
-      });
-    });
+(function(){
+  var ICON={user:"👤",agent:"🤖",tools:"🔧"};
+  // Each scenario is a deterministic "script" — the same idea as the lab's FakeChatModel.
+  var SCEN={
+    math:{label:"➕ Simple tool call", user:"What is 24 × 7?", steps:[
+      {node:"agent", who:"agent think", cls:"think", html:"I should use the calculator tool."},
+      {node:"agent", who:"agent → tool_call", cls:"tc", html:"calculator(a=24, b=7, op=&quot;mul&quot;)"},
+      {node:"tools", who:"tool result", cls:"tres", html:"168.0"},
+      {node:"agent", who:"agent", cls:"final", html:"24 × 7 = <b>168</b>."},
+      {node:"end"}
+    ]},
+    error:{label:"⚠️ Tool fails → recovers", user:"Get the price from the flaky API.", steps:[
+      {node:"agent", who:"agent → tool_call", cls:"tc", html:"flaky_api()"},
+      {node:"tools", who:"tool ERROR", cls:"terr", html:"ConnectionError: transient failure on attempt 1"},
+      {node:"agent", who:"agent think", cls:"think", html:"handle_tool_errors fed the error back as a message — I'll retry."},
+      {node:"agent", who:"agent → tool_call", cls:"tc", html:"flaky_api()"},
+      {node:"tools", who:"tool result", cls:"tres", html:"$42.00"},
+      {node:"agent", who:"agent", cls:"final", html:"The price is <b>$42.00</b> — succeeded after one retry."},
+      {node:"end"}
+    ]},
+    loop:{label:"🔁 Infinite loop → capped", user:"Keep refining the answer forever.", steps:[
+      {node:"agent", who:"agent → tool_call", cls:"tc", html:"refine()", step:1},
+      {node:"tools", who:"tool result", cls:"tres", html:"draft v1", step:1},
+      {node:"agent", who:"agent → tool_call", cls:"tc", html:"refine()", step:2},
+      {node:"tools", who:"tool result", cls:"tres", html:"draft v2", step:2},
+      {node:"agent", who:"agent → tool_call", cls:"tc", html:"refine()", step:3},
+      {node:"err",  who:"runtime", cls:"recerr", html:"GraphRecursionError — recursion_limit (3) reached", step:3},
+      {node:"agent", who:"agent (graceful cap)", cls:"final", html:"Sorry, need more steps to process this request."},
+      {node:"end"}
+    ]},
+    hitl:{label:"🙋 Human approval", user:"Delete the production database.", steps:[
+      {node:"agent", who:"agent → tool_call", cls:"tc", html:"dangerous_delete(target=&quot;prod-db&quot;)"},
+      {node:"interrupt"}
+    ],
+    approve:[
+      {node:"tools", who:"tool result", cls:"tres", html:"[deleted] prod-db (irreversible)"},
+      {node:"agent", who:"agent", cls:"final", html:"Done — <b>prod-db</b> deleted, as approved."},
+      {node:"end"}
+    ],
+    deny:[
+      {node:"agent", who:"agent", cls:"final", html:"Cancelled — <b>nothing was deleted</b>. Good call."},
+      {node:"end"}
+    ]}
+  };
+  var ORDER=["math","error","loop","hitl"];
+
+  var feed=document.getElementById("feed"), loop=document.getElementById("loop"),
+      lcount=document.getElementById("lcount"), runBtn=document.getElementById("runBtn"),
+      resetBtn=document.getElementById("resetBtn"), approve=document.getElementById("approve"),
+      okBtn=document.getElementById("okBtn"), noBtn=document.getElementById("noBtn"),
+      hint=document.getElementById("hint"), scenWrap=document.getElementById("scen");
+
+  var current="math", token=0, decisionResolve=null;
+
+  // build scenario buttons
+  ORDER.forEach(function(k){
+    var b=document.createElement("button");
+    b.textContent=SCEN[k].label; b.dataset.k=k;
+    b.onclick=function(){ if(runBtn.disabled) return; current=k; markScen(); reset(); };
+    scenWrap.appendChild(b);
   });
+  function markScen(){ Array.prototype.forEach.call(scenWrap.children,function(b){ b.classList.toggle("on", b.dataset.k===current); }); }
+
+  function delay(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+  function setActive(n){ Array.prototype.forEach.call(loop.querySelectorAll(".lnode"),function(el){ el.classList.toggle("active", el.dataset.n===n); }); }
+  function clearActive(){ Array.prototype.forEach.call(loop.querySelectorAll(".lnode"),function(el){ el.classList.remove("active"); }); }
+
+  function addMsg(role, who, cls, html){
+    var row=document.createElement("div"); row.className="msg "+role;
+    var icon=ICON[role]|| (role==="tools"?"🔧":"•");
+    row.innerHTML='<div class="ic">'+icon+'</div><div><div class="who">'+who+'</div>'+
+                  '<div class="bub"><span class="'+(cls||"")+'">'+html+'</span></div></div>';
+    feed.appendChild(row); feed.scrollTop=feed.scrollHeight;
+  }
+
+  function reset(){
+    token++; feed.innerHTML=""; clearActive(); lcount.textContent="";
+    approve.style.display="none"; hint.textContent=""; runBtn.disabled=false; runBtn.textContent="▶ Run";
+    var s=SCEN[current];
+    addMsg("user","you",null,s.user);
+  }
+
+  function renderStep(st){
+    if(st.node==="end"){ setActive("end"); return; }
+    if(st.node==="interrupt") return;
+    var loopNode = st.node==="err" ? "tools" : st.node;
+    setActive(st.node==="err" ? null : loopNode);
+    if(st.node==="err"){ var en=loop.querySelector('.lnode.tools'); }
+    if(st.step!=null) lcount.innerHTML='step <b>'+st.step+'</b> / 3';
+    var role = st.node==="tools" ? "tools" : (st.node==="err" ? "tools" : "agent");
+    addMsg(role, st.who, st.cls, st.html);
+  }
+
+  function waitDecision(){
+    approve.style.display="flex";
+    hint.textContent="⏸ paused before a destructive tool — your call";
+    setActive("tools");
+    return new Promise(function(res){ decisionResolve=res; });
+  }
+
+  okBtn.onclick=function(){ if(decisionResolve){ approve.style.display="none"; hint.textContent=""; var r=decisionResolve; decisionResolve=null; r(true);} };
+  noBtn.onclick=function(){ if(decisionResolve){ approve.style.display="none"; hint.textContent=""; var r=decisionResolve; decisionResolve=null; r(false);} };
+
+  async function run(){
+    if(runBtn.disabled) return;
+    reset();                    // fresh start (also bumps token)
+    var my=token; runBtn.disabled=true; runBtn.textContent="running…";
+    var s=SCEN[current];
+    setActive("agent"); await delay(450); if(my!==token) return;
+    for(var i=0;i<s.steps.length;i++){
+      var st=s.steps[i];
+      if(st.node==="interrupt"){
+        var ok=await waitDecision(); if(my!==token) return;
+        var cont = ok ? s.approve : s.deny;
+        for(var j=0;j<cont.length;j++){ await delay(700); if(my!==token) return; renderStep(cont[j]); }
+        break;
+      }
+      await delay(720); if(my!==token) return;
+      renderStep(st);
+    }
+    if(my!==token) return;
+    runBtn.disabled=false; runBtn.textContent="▶ Run again";
+    hint.textContent="done ✓";
+  }
+
+  runBtn.onclick=run;
+  resetBtn.onclick=function(){ reset(); };
+  markScen(); reset();
+})();
 </script>
 </body>
 </html>

@@ -1,0 +1,12 @@
+# Pinned mirror of pyproject deps, for `pip install -r requirements.txt`.
+# The lab runs fully offline; langchain-anthropic is only exercised when you set a key.
+langgraph==0.3.34
+langgraph-checkpoint-sqlite
+langchain-core
+langchain-anthropic
+python-dotenv
+
+# dev / tests
+pytest
+pytest-asyncio
+pytest-timeout

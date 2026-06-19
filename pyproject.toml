@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "langgraph-agents-lab"
+version = "0.1.0"
+description = "A hands-on, offline-runnable LangGraph teaching lab: single agent -> tool-use failure modes -> multi-agent -> orchestrator -> advanced."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Sugeerth Murugesan" }]
+dependencies = [
+    "langgraph==0.3.34",
+    "langgraph-checkpoint-sqlite",
+    "langchain-core",
+    "langchain-anthropic",
+    "python-dotenv",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "pytest-timeout"]
+
+[tool.setuptools.packages.find]
+include = ["lab*"]
+
+[tool.pytest.ini_options]
+addopts = "-q --timeout=20"
+testpaths = ["tests"]
+asyncio_mode = "auto"
